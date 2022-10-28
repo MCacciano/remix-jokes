@@ -1,8 +1,9 @@
-import type { LoaderFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
+import type { ActionFunction, LoaderFunction } from '@remix-run/node';
+import { json, redirect } from '@remix-run/node';
 import { Joke } from '@prisma/client';
-import { useLoaderData, useParams, useCatch } from '@remix-run/react';
+import { useLoaderData, useParams, useCatch, Link } from '@remix-run/react';
 import { db } from '~/utils/db.server';
+import { requireUserId } from '~/utils/session.server';
 
 type LoaderData = { joke: Joke };
 
@@ -20,6 +21,34 @@ export const loader: LoaderFunction = async ({ params }) => {
   return json(data);
 };
 
+export const action: ActionFunction = async ({ request, params }) => {
+  const form = await request.formData();
+
+  if (form.get('_method') !== 'delete') {
+    throw new Response(`the _method ${form.get('_method')} is not supported`, {
+      status: 400,
+    });
+  }
+
+  const userId = await requireUserId(request);
+  const joke = await db.joke.findUnique({
+    where: { id: params.jokeId },
+  });
+
+  if (!joke) {
+    throw new Response("Can't delete what does not exist", { status: 404 });
+  }
+
+  if (joke.jokesterId !== userId) {
+    throw new Response("Pssh, nice try. That's not your joke", {
+      status: 401,
+    });
+  }
+
+  await db.joke.delete({ where: { id: params.jokeId } });
+  return redirect('/jokes');
+};
+
 export default function JokeRoute() {
   const { joke } = useLoaderData<LoaderData>();
 
@@ -27,6 +56,14 @@ export default function JokeRoute() {
     <div>
       <p>Here's your hilarious joke:</p>
       <p>{joke?.content || ''}</p>
+      <Link to='.'>{joke.name} Permalink</Link>
+      <form method='post'>
+        <input type='hidden' name='_method' value='delete' />
+        <button type='submit' className='button'>
+          Delete
+        </button>
+        Œ
+      </form>
     </div>
   );
 }
