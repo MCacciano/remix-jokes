@@ -3,7 +3,7 @@ import { json } from '@remix-run/node';
 import { Link, useSearchParams, useActionData } from '@remix-run/react';
 
 import { db } from '~/utils/db.server';
-import { login } from '~/utils/session.server';
+import { register, login, createUserSession } from '~/utils/session.server';
 import stylesUrl from '../styles/login.css';
 
 export const links: LinksFunction = () => {
@@ -74,7 +74,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   switch (loginType) {
-    case 'login':
+    case 'login': {
       const user = await login({ username, password });
       console.log({ user });
 
@@ -85,8 +85,9 @@ export const action: ActionFunction = async ({ request }) => {
         });
       }
       // if there is a user, create their session and redirect to /jokes
-      return badRequest({ fields, formError: 'Not implemented' });
-    case 'register':
+      return createUserSession(user.id, redirectTo);
+    }
+    case 'register': {
       const userExists = await db.user.findFirst({
         where: { username },
       });
@@ -98,9 +99,16 @@ export const action: ActionFunction = async ({ request }) => {
         });
       }
 
-      // create the user
-      // create their session and redirect to /jokes
-      return badRequest({ fields, formError: 'Not implemented' });
+      const user = await register({ username, password });
+
+      if (!user) {
+        return badRequest({
+          fields,
+          formError: `Something went wrong trying to create a new user.`,
+        });
+      }
+      return createUserSession(user.id, redirectTo);
+    }
     default:
       return badRequest({ fields, formError: 'Login type invalid' });
   }
