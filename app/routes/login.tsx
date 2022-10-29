@@ -1,6 +1,6 @@
 import type { LinksFunction, ActionFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { Link, useSearchParams, useActionData } from '@remix-run/react';
+import { Link, useSearchParams, useActionData, Form } from '@remix-run/react';
 
 import { db } from '~/utils/db.server';
 import { register, login, createUserSession } from '~/utils/session.server';
@@ -122,7 +122,7 @@ export default function Login() {
     <div className='container'>
       <div className='content' data-light=''>
         <h1>Login</h1>
-        <form method='post'>
+        <Form method='post'>
           <input
             type='hidden'
             name='redirectTo'
@@ -198,7 +198,7 @@ export default function Login() {
           <button type='submit' className='button'>
             Submit
           </button>
-        </form>
+        </Form>
       </div>
       <div className='links'>
         <ul>

@@ -1,7 +1,7 @@
 import type { ActionFunction, LoaderFunction } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import { Joke } from '@prisma/client';
-import { useLoaderData, useParams, useCatch, Link } from '@remix-run/react';
+import { useLoaderData, useParams, useCatch, Link, Form } from '@remix-run/react';
 import { db } from '~/utils/db.server';
 import { getUserId, requireUserId } from '~/utils/session.server';
 
@@ -59,12 +59,12 @@ export default function JokeRoute() {
       <p>{joke?.content || ''}</p>
       <Link to='.'>{joke.name} Permalink</Link>
       {isOwner && (
-        <form method='post'>
+        <Form method='post'>
           <input type='hidden' name='_method' value='delete' />
           <button type='submit' className='button'>
             Delete
           </button>
-        </form>
+        </Form>
       )}
     </div>
   );
